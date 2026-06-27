@@ -1,10 +1,10 @@
 import axios from "axios";
 import type { NewsArticle } from "../types/news";
 
-const API_KEY = import.meta.env.VITE_NEWSDATA_API_KEY;
+const API_KEY = import.meta.env.VITE_CURRENTS_API_KEY;
 
 const categoryMap: Record<string, string> = {
-  general: "top",          // 👈 important
+  general: "regional",
   technology: "technology",
   business: "business",
   sports: "sports",
@@ -12,25 +12,60 @@ const categoryMap: Record<string, string> = {
   science: "science",
 };
 
-export async function getNews(category: string): Promise<NewsArticle[]> {
+export async function getNews(
+  category: string,
+  search = ""
+): Promise<NewsArticle[]> {
+  try {
+    const apiCategory = categoryMap[category] || "regional";
 
-  const apiCategory = categoryMap[category] || "top";
+    let response;
 
-  const response = await axios.get(
-    `https://newsdata.io/api/1/latest?apikey=${API_KEY}&language=en&category=${apiCategory}`
-  );
+    if (search.trim()) {
+      // Search News
+      response = await axios.get(
+        "https://api.currentsapi.services/v1/search",
+        {
+          headers: {
+            Authorization: API_KEY,
+          },
+          params: {
+            keywords: search,
+            language: "en",
+          },
+        }
+      );
+    } else {
+      // Latest News by Category
+      response = await axios.get(
+        "https://api.currentsapi.services/v1/latest-news",
+        {
+          headers: {
+            Authorization: API_KEY,
+          },
+          params: {
+            language: "en",
+            category: apiCategory,
+          },
+        }
+      );
+    }
 
-  console.log(response.data);
-
-  return (response.data.results || []).map((article: any, index: number) => ({
-    id: index + 1,
-    title: article.title,
-    description: article.description || "No description available",
-    image:
-      article.image_url ||
-      "https://placehold.co/320x180?text=No+Image",
-    source: article.source_name || "Unknown",
-    publishedAt: article.pubDate,
-    url: article.link,
-  }));
+    return (response.data.news || []).map(
+      (article: any, index: number): NewsArticle => ({
+        id: index + 1,
+        title: article.title,
+        description: article.description || "No description available",
+        image:
+          article.image ||
+          "https://placehold.co/320x180?text=No+Image",
+        source: article.author || "Unknown",
+        publishedAt: article.published,
+        url: article.url,
+      })
+    );
+  } catch (error: any) {
+    console.error("Currents API Error:", error.response?.data || error.message);
+    return [];
+  }
 }
