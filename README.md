@@ -8,7 +8,9 @@ Stay updated with the latest breaking news from around the world through a clean
 
 ## 🚀 Live Demo
 
-> Coming Soon (Vercel Deployment)
+## Live Demo
+
+https://news-aggregator-eight-gamma.vercel.app
 
 ---
 
