@@ -1,11 +1,25 @@
 import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 import PageWrapper from "../components/common/PageWrapper";
 import toast from "react-hot-toast";
 import RelatedNews from "../components/news/RelatedNews";
 
+import type { NewsArticle } from "../types/news";
+import { searchRelatedNews } from "../services/newsService";
+
 function NewsDetails() {
   const { state } = useLocation();
+  const [relatedNews, setRelatedNews] = useState<NewsArticle[]>([]);
+  useEffect(() => {
+    async function loadRelatedNews() {
+      const news = await searchRelatedNews(state.title, state.url);
+
+      setRelatedNews(news);
+    }
+
+    loadRelatedNews();
+  }, [state]);
 
   if (!state) {
     return (
@@ -46,35 +60,34 @@ function NewsDetails() {
 
   return (
     <PageWrapper>
-      <div className="max-w-6xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
         {/* Hero Image */}
         <img
-          src={state.image}
+          src={state.image || "/placeholder.jpg"}
           alt={state.title}
+          className="w-full h-56 sm:h-72 md:h-96 lg:h-[500px] object-cover rounded-2xl shadow-lg"
+          loading="lazy"
           onError={(e) => {
-            e.currentTarget.src = "https://placehold.co/1200x600?text=News";
+            e.currentTarget.src = "/placeholder.jpg";
           }}
         />
-
         {/* Title */}
-        <h1 className="text-5xl font-bold mt-8">{state.title}</h1>
-
+        <h1 className="mt-6 text-2xl md:text-4xl font-bold leading-tight">
+          {state.title}
+        </h1>
         {/* Source & Date */}
-        <div className="flex flex-wrap gap-6 mt-5 text-gray-500 dark:text-gray-400">
+        <div className="flex flex-wrap gap-6 mt-4 text-gray-500 dark:text-gray-400">
           <p>
             📰 <strong>{state.source}</strong>
           </p>
 
           <p>📅 {new Date(state.publishedAt).toLocaleDateString()}</p>
         </div>
-
         {/* Description */}
         <p className="mt-8 text-lg leading-8 text-gray-700 dark:text-gray-300">
           {state.description}
         </p>
-
         <hr className="my-10 border-gray-300 dark:border-gray-700" />
-
         {/* Article Information */}
         <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-8">
           <h2 className="text-2xl font-bold mb-6">📰 Article Information</h2>
@@ -98,7 +111,6 @@ function NewsDetails() {
             </p>
           </div>
         </div>
-
         {/* Action Buttons */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
           <Link
@@ -131,7 +143,6 @@ function NewsDetails() {
             🌐 Original
           </a>
         </div>
-
         {/* CTA Section */}
         <div className="mt-16 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-10 text-white text-center">
           <h2 className="text-3xl font-bold">Enjoyed this article?</h2>
@@ -147,8 +158,7 @@ function NewsDetails() {
             🏠 Browse More News
           </Link>
         </div>
-
-        <RelatedNews articles={[state, state, state]} />
+        {relatedNews.length > 0 && <RelatedNews articles={relatedNews} />}{" "}
       </div>
     </PageWrapper>
   );

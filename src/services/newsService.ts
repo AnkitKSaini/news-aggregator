@@ -85,3 +85,62 @@ export async function getNews(
     throw new Error("Failed to fetch news.");
   }
 }
+
+export async function searchRelatedNews(
+  title: string,
+  currentUrl: string,
+): Promise<NewsArticle[]> {
+  try {
+    const keyword = title
+      .replace(/[^\w\s]/g, "")
+      .split(" ")
+      .filter((word) => word.length > 3)
+      .slice(0, 3)
+      .join(" ");
+
+    const response = await axios.get(
+      "https://api.currentsapi.services/v1/search",
+      {
+        headers: {
+          Authorization: API_KEY,
+        },
+        params: {
+          keywords: keyword,
+          language: "en",
+        },
+      },
+    );
+
+    const news = response.data.news || [];
+
+    const filteredNews = news.filter(
+      (article: any) =>
+        article && article.title && article.url && article.url !== currentUrl,
+    );
+
+    const uniqueNews = Array.from(
+      new Map(
+        filteredNews.map((article: any) => [article.url, article]),
+      ).values(),
+    );
+
+    return uniqueNews.slice(0, 3).map(
+      (article: any, index: number): NewsArticle => ({
+        id: index + 1,
+        title: article.title || "Untitled News",
+        description: article.description || "No description available.",
+        image:
+          article.image && article.image.startsWith("http")
+            ? article.image
+            : "/placeholder.jpg",
+        source: article.author || article.author_name || "Unknown",
+        publishedAt: article.published || new Date().toISOString(),
+        url: article.url,
+      }),
+    );
+  } catch (error: any) {
+    console.error("Related News Error:", error.response?.data || error.message);
+
+    return [];
+  }
+}
