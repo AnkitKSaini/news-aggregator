@@ -1,12 +1,9 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
-import {
-  saveFavorite,
-  removeFavorite,
-  isFavorite,
-} from "../../utils/favorites";
-
+import { useFavorites } from "../../context/FavoritesContext";
 import {
   saveBookmark,
   removeBookmark,
@@ -32,11 +29,13 @@ function NewsCard({
   publishedAt,
   url,
 }: NewsCardProps) {
-  const [favorite, setFavorite] = useState(isFavorite(url));
+  const { toggleFavorite, isFavorite } = useFavorites();
+
+  const favorite = isFavorite(url);
+
   const [bookmarked, setBookmarked] = useState(isBookmarked(url));
 
-  // Favorite Toggle
-  function toggleFavorite() {
+  function handleFavorite() {
     const article = {
       id,
       title,
@@ -47,15 +46,13 @@ function NewsCard({
       url,
     };
 
+    toggleFavorite(article);
+
     if (favorite) {
-      removeFavorite(url);
       toast("Removed from Favorites");
     } else {
-      saveFavorite(article);
       toast.success("Added to Favorites ❤️");
     }
-
-    setFavorite(!favorite);
   }
 
   function toggleBookmark() {
@@ -80,8 +77,7 @@ function NewsCard({
     setBookmarked(!bookmarked);
   }
 
-  // Share News
-  const shareNews = async () => {
+  async function shareNews() {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -89,85 +85,107 @@ function NewsCard({
           text: description,
           url,
         });
-      } catch (error) {
-        console.log(error);
+      } catch (err) {
+        console.log(err);
       }
     } else {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link Copied 🔗");
+      navigator.clipboard.writeText(url);
+      toast.success("🔗 Link Copied");
     }
-  };
+  }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 overflow-hidden flex flex-col h-full">
-      {/* News Image */}
-      <img src={image} alt={title} className="w-full h-52 object-cover" />
+    <motion.div
+      initial={{ opacity: 0, y: 25 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.25 }}
+      className="bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-xl overflow-hidden flex flex-col transition-all"
+    >
+      {/* Image */}
+      <div className="relative">
+        <img
+          src={image || "/placeholder.jpg"}
+          alt={title}
+          className="w-full h-44 object-cover"
+          loading="lazy"
+          onError={(e) => {
+            e.currentTarget.src = "/placeholder.jpg";
+          }}
+        />
 
-      {/* Card Body */}
-      <div className="flex flex-col flex-1 p-5">
-        {/* Title */}
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white leading-6 h-14 overflow-hidden">
+        <span className="absolute top-3 left-3 bg-red-600 text-white text-[11px] px-2 py-1 rounded-full">
+          🔥 Trending
+        </span>
+      </div>
+
+      {/* Content */}
+      <div className="flex flex-col flex-1 p-4">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white line-clamp-2">
           {title}
         </h2>
 
-        {/* Description */}
-        <p className="text-gray-600 dark:text-gray-300 text-sm mt-3 h-20 overflow-hidden">
+        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2 line-clamp-3">
           {description}
         </p>
 
-        {/* Source */}
-        <p className="mt-4 text-sm font-medium text-gray-700 dark:text-gray-300">
-          📰 {source}
-        </p>
+        <div className="flex justify-between items-center text-xs text-gray-500 mt-4">
+          <span className="truncate">📰 {source}</span>
 
-        {/* Date */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-          📅 {new Date(publishedAt).toLocaleDateString()}
-        </p>
+          <span>{new Date(publishedAt).toLocaleDateString()}</span>
+        </div>
 
-        {/* Buttons */}
-        <div className="mt-auto pt-5 space-y-3">
+        {/* Icons */}
+        <div className="flex justify-center gap-3 mt-5">
           <button
             onClick={toggleBookmark}
-            className={`w-full py-2 rounded-lg font-semibold transition ${
+            className={`w-10 h-10 rounded-full transition ${
               bookmarked
-                ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                : "bg-gray-300 dark:bg-gray-700 dark:text-white hover:bg-gray-400"
+                ? "bg-yellow-500 text-white"
+                : "bg-gray-200 dark:bg-gray-700"
             }`}
           >
-            {bookmarked ? "⭐ Bookmarked" : "☆ Bookmark"}
+            ⭐
           </button>
 
-          {/* Favorite Button */}
           <button
-            onClick={toggleFavorite}
-            className={`w-full py-2 rounded-lg font-semibold transition ${
+            onClick={handleFavorite}
+            className={`w-10 h-10 rounded-full transition ${
               favorite
-                ? "bg-red-500 hover:bg-red-600 text-white"
-                : "bg-gray-200 dark:bg-gray-700 dark:text-white hover:bg-gray-300"
+                ? "bg-red-500 text-white"
+                : "bg-gray-200 dark:bg-gray-700"
             }`}
           >
-            {favorite ? "❤️ Saved" : "🤍 Favorite"}
+            ❤️
           </button>
 
-          {/* Share Button */}
           <button
             onClick={shareNews}
-            className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg transition duration-300"
+            className="w-10 h-10 rounded-full bg-green-600 text-white hover:bg-green-700 transition"
           >
-            📤 Share News
-          </button>
-
-          {/* Read More Button */}
-          <button
-            onClick={() => window.open(url, "_blank")}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-lg transition duration-300"
-          >
-            📖 Read Full Article
+            📤
           </button>
         </div>
+
+        {/* Read Details */}
+        <Link
+          to={`/news/${id}`}
+          state={{
+            id,
+            title,
+            description,
+            image,
+            source,
+            publishedAt,
+            url,
+          }}
+          className="mt-5 w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2.5 rounded-xl text-center font-medium transition"
+        >
+          Read Details →
+        </Link>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
 
+import PageWrapper from "../components/common/PageWrapper";
 import CategoryBar from "../components/common/CategoryBar";
 import SearchBar from "../components/common/SearchBar";
 import Loading from "../components/common/Loading";
 import NoResults from "../components/common/NoResults";
+import ErrorState from "../components/common/ErrorState";
+
+import HeroNews from "../components/news/HeroNews";
+import FeaturedCarousel from "../components/news/FeaturedCarousel";
 import NewsCard from "../components/news/NewsCard";
 
 import { getNews } from "../services/newsService";
@@ -17,7 +22,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Debounce Search (500ms)
+  // Search Debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -26,77 +31,116 @@ function Home() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  // Load News
-  useEffect(() => {
-    async function loadNews() {
-      try {
-        setLoading(true);
-        setError("");
+  // Fetch News
+  async function loadNews() {
+    try {
+      setLoading(true);
+      setError("");
 
-        const data = await getNews(category, debouncedSearch);
+      const data = await getNews(category, debouncedSearch);
 
-        setArticles(data);
-      } catch (error) {
-        console.error(error);
-        setError("Failed to load news.");
-      } finally {
-        setLoading(false);
-      }
+      setArticles(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load latest news.");
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     loadNews();
   }, [category, debouncedSearch]);
 
+  if (loading) return <Loading />;
+
+  if (error) {
+    return (
+      <PageWrapper>
+        <ErrorState
+          message={error}
+          onRetry={loadNews}
+        />
+      </PageWrapper>
+    );
+  }
+
+  if (articles.length === 0) {
+    return (
+      <PageWrapper>
+        <NoResults />
+      </PageWrapper>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
+    <PageWrapper>
+      {/* Hero */}
+      <HeroNews article={articles[0]} />
 
-      <CategoryBar
-        category={category}
-        setCategory={setCategory}
-      />
-
-      <SearchBar
-        search={search}
-        setSearch={setSearch}
-      />
-
-      <div className="flex justify-center my-6">
-        <button
-          onClick={() => window.location.reload()}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-lg transition"
-        >
-          🔄 Refresh News
-        </button>
+      {/* Category */}
+      <div className="mt-8">
+        <CategoryBar
+          category={category}
+          setCategory={setCategory}
+        />
       </div>
 
-      {error && (
-        <div className="text-center text-red-500 font-semibold mb-6">
-          {error}
-        </div>
-      )}
+      {/* Search */}
+      <div className="mt-6">
+        <SearchBar
+          search={search}
+          setSearch={setSearch}
+        />
+      </div>
 
-      {loading ? (
-        <Loading />
-      ) : articles.length === 0 ? (
-        <NoResults />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-          {articles.map((item) => (
-            <NewsCard
-              key={item.id}
-              id={item.id}
-              title={item.title}
-              description={item.description}
-              image={item.image}
-              source={item.source}
-              publishedAt={item.publishedAt}
-              url={item.url}
-            />
-          ))}
-        </div>
-      )}
+      {/* Featured */}
+      <div className="mt-10">
+        <FeaturedCarousel
+          articles={articles.slice(1, 6)}
+        />
+      </div>
 
-    </div>
+      {/* Heading + Refresh */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-12 mb-6 gap-4">
+
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold">
+            📰 Latest Headlines
+          </h2>
+
+          <p className="text-gray-500 dark:text-gray-400 mt-2">
+            Stay updated with the latest breaking news.
+          </p>
+        </div>
+
+        <button
+          onClick={loadNews}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-medium transition"
+        >
+          🔄 Refresh
+        </button>
+
+      </div>
+
+      {/* News Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        {articles.slice(1).map((item) => (
+          <NewsCard
+            key={item.url}
+            id={item.id}
+            title={item.title}
+            description={item.description}
+            image={item.image}
+            source={item.source}
+            publishedAt={item.publishedAt}
+            url={item.url}
+          />
+        ))}
+
+      </div>
+    </PageWrapper>
   );
 }
 

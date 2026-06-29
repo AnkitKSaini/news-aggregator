@@ -14,7 +14,7 @@ const categories = [
 
 function CategoryBar({ category, setCategory }: CategoryBarProps) {
   return (
-    <div className="flex justify-center gap-3 flex-wrap mt-6">
+    <div className="flex justify-center gap-3 mt-4 mb-2">
       {categories.map((item) => (
         <button
           key={item}
