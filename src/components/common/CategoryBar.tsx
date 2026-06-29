@@ -14,20 +14,24 @@ const categories = [
 
 function CategoryBar({ category, setCategory }: CategoryBarProps) {
   return (
-    <div className="flex justify-center gap-3 mt-4 mb-2">
-      {categories.map((item) => (
-        <button
-          key={item}
-          onClick={() => setCategory(item)}
-          className={`px-5 py-2 rounded-lg font-medium transition ${
-            category === item
-              ? "bg-blue-600 text-white"
-              : "bg-gray-200 dark:bg-gray-700 dark:text-white hover:bg-gray-300"
-          }`}
-        >
-          {item.toUpperCase()}
-        </button>
-      ))}
+    <div className="w-full overflow-x-auto scrollbar-hide py-2">
+      <div className="flex gap-3 min-w-max justify-start md:justify-center">
+
+        {categories.map((item) => (
+          <button
+            key={item}
+            onClick={() => setCategory(item)}
+            className={`flex-shrink-0 px-5 py-2 rounded-lg font-medium whitespace-nowrap transition ${
+              category === item
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 dark:bg-gray-700 dark:text-white hover:bg-gray-300"
+            }`}
+          >
+            {item.toUpperCase()}
+          </button>
+        ))}
+
+      </div>
     </div>
   );
 }
