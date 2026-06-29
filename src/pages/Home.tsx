@@ -36,6 +36,10 @@ function Home() {
     try {
       setLoading(true);
       setError("");
+      if (debouncedSearch.trim() !== "" && debouncedSearch.trim().length < 3) {
+        setLoading(false);
+        return;
+      }
 
       const data = await getNews(category, debouncedSearch);
 
@@ -57,10 +61,7 @@ function Home() {
   if (error) {
     return (
       <PageWrapper>
-        <ErrorState
-          message={error}
-          onRetry={loadNews}
-        />
+        <ErrorState message={error} onRetry={loadNews} />
       </PageWrapper>
     );
   }
@@ -80,30 +81,21 @@ function Home() {
 
       {/* Category */}
       <div className="mt-8">
-        <CategoryBar
-          category={category}
-          setCategory={setCategory}
-        />
+        <CategoryBar category={category} setCategory={setCategory} />
       </div>
 
       {/* Search */}
       <div className="mt-6">
-        <SearchBar
-          search={search}
-          setSearch={setSearch}
-        />
+        <SearchBar search={search} setSearch={setSearch} />
       </div>
 
       {/* Featured */}
       <div className="mt-10">
-        <FeaturedCarousel
-          articles={articles.slice(1, 6)}
-        />
+        <FeaturedCarousel articles={articles.slice(1, 6)} />
       </div>
 
       {/* Heading + Refresh */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-12 mb-6 gap-4">
-
         <div>
           <h2 className="text-2xl md:text-3xl font-bold">
             📰 Latest Headlines
@@ -120,12 +112,10 @@ function Home() {
         >
           🔄 Refresh
         </button>
-
       </div>
 
       {/* News Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-
         {articles.slice(1).map((item) => (
           <NewsCard
             key={item.url}
@@ -138,7 +128,6 @@ function Home() {
             url={item.url}
           />
         ))}
-
       </div>
     </PageWrapper>
   );
